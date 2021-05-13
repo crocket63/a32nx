@@ -366,7 +366,7 @@ impl A320Hydraulic {
         self.engine_driven_pump_1_controller.update(
             overhead_panel,
             engine_fire_overhead,
-            engine1.corrected_n2(),
+            engine1.uncorrected_n2(),
             engine1.oil_pressure(),
             self.engine_driven_pump_1_pressure_switch.is_pressurised(),
         );
@@ -385,7 +385,7 @@ impl A320Hydraulic {
         self.engine_driven_pump_2_controller.update(
             overhead_panel,
             engine_fire_overhead,
-            engine2.corrected_n2(),
+            engine2.uncorrected_n2(),
             engine2.oil_pressure(),
             self.engine_driven_pump_2_pressure_switch.is_pressurised(),
         );
@@ -1391,15 +1391,18 @@ mod tests {
                 }
             }
 
-            fn run_one_tick(self) -> Self {
-                self.run_waiting_for(Duration::from_millis(
+            fn run_one_tick(mut self) -> Self {
+                self.simulation_test_bed.set_delta(Duration::from_millis(
                     A320Hydraulic::HYDRAULIC_SIM_TIME_STEP_MILLISECONDS,
-                ))
+                ));
+                self.simulation_test_bed.run_aircraft(&mut self.aircraft);
+                self
             }
 
             fn run_waiting_for(mut self, delta: Duration) -> Self {
                 self.simulation_test_bed.set_delta(delta);
-                self.simulation_test_bed.run_aircraft(&mut self.aircraft);
+                self.simulation_test_bed
+                    .run_aircraft_multiple_frames(&mut self.aircraft);
                 self
             }
 
@@ -1620,6 +1623,8 @@ mod tests {
                     .write_bool("GENERAL ENG STARTER ACTIVE:1", true);
                 self.simulation_test_bed
                     .write_f64("TURB ENG CORRECTED N2:1", n2.get::<percent>());
+                self.simulation_test_bed
+                    .write_f64("TURB ENG N2:1", n2.get::<percent>());
 
                 self
             }
@@ -1629,6 +1634,8 @@ mod tests {
                     .write_bool("GENERAL ENG STARTER ACTIVE:2", true);
                 self.simulation_test_bed
                     .write_f64("TURB ENG CORRECTED N2:2", n2.get::<percent>());
+                self.simulation_test_bed
+                    .write_f64("TURB ENG N2:2", n2.get::<percent>());
 
                 self
             }
@@ -1638,6 +1645,7 @@ mod tests {
                     .write_bool("GENERAL ENG STARTER ACTIVE:1", false);
                 self.simulation_test_bed
                     .write_f64("TURB ENG CORRECTED N2:1", 0.);
+                self.simulation_test_bed.write_f64("TURB ENG N2:1", 0.);
 
                 self
             }
@@ -1647,6 +1655,7 @@ mod tests {
                     .write_bool("GENERAL ENG STARTER ACTIVE:1", false);
                 self.simulation_test_bed
                     .write_f64("TURB ENG CORRECTED N2:1", 25.);
+                self.simulation_test_bed.write_f64("TURB ENG N2:1", 25.);
 
                 self
             }
@@ -1656,6 +1665,7 @@ mod tests {
                     .write_bool("GENERAL ENG STARTER ACTIVE:2", false);
                 self.simulation_test_bed
                     .write_f64("TURB ENG CORRECTED N2:2", 0.);
+                self.simulation_test_bed.write_f64("TURB ENG N2:2", 0.);
 
                 self
             }
@@ -1665,6 +1675,7 @@ mod tests {
                     .write_bool("GENERAL ENG STARTER ACTIVE:2", false);
                 self.simulation_test_bed
                     .write_f64("TURB ENG CORRECTED N2:2", 25.);
+                self.simulation_test_bed.write_f64("TURB ENG N2:2", 25.);
 
                 self
             }
